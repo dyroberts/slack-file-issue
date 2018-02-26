@@ -1,0 +1,75 @@
+---
+
+resource_types:
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+    tag: latest
+
+resources:
+- name: alert
+  type: slack-notification
+  source:
+    url: ((slack-hook))
+- name: task-image
+  type: docker-image
+  source:
+    repository: alpine
+    tag: latest
+
+jobs:
+- name: file-missing-no-alert
+  plan:
+  - get: task-image
+  - task: just-fail
+    image: task-image
+    config:
+      platform: linux
+      outputs:
+      - name: test-reports
+      run:
+        path: /bin/sh
+        args:
+        - -c
+        - exit 1
+  on_failure:
+    put: alert
+    params:
+      icon_emoji: ":inconceivable:"
+      username: concourse
+      channel: ((slack-channel))
+      text: |
+        Hello world
+
+        $TEXT_FILE_CONTENT
+      text_file: test-reports/notfound
+
+- name: file-empty-no-alert
+  plan:
+  - get: task-image
+  - task: touch-then-fail
+    image: task-image
+    config:
+      platform: linux
+      outputs:
+      - name: test-reports
+      run:
+        path: /bin/sh
+        args:
+        - -c
+        - |
+          set -ex
+          touch foundbutempty
+          exit 1
+  on_failure:
+    put: alert
+    params:
+      icon_emoji: ":inconceivable:"
+      username: concourse
+      channel: ((slack-channel))
+      text: |
+        Hello world
+
+        $TEXT_FILE_CONTENT
+      text_file: test-reports/foundbutempty
