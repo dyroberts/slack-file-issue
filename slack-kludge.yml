@@ -15,7 +15,7 @@ outputs:
 - name: failures
 
 run:
-  path: /bin/bash
+  path: /bin/sh
   args:
   - -c
   - |
