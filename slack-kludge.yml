@@ -1,0 +1,28 @@
+---
+# This task is a workaround for https://github.com/cloudfoundry-community/slack-notification-resource/issues/46
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: alpine
+    tag: latest
+
+inputs:
+- name: test-reports
+
+outputs:
+- name: failures
+
+run:
+  path: /bin/bash
+  args:
+  - -c
+  - |
+    set -ex
+    cd test-reports
+    if [ ! -s failures.txt ]
+    then
+      echo " " > failures.txt
+    fi
+    cp failures.txt ../failures/
